@@ -5,6 +5,7 @@
 #include <signal.h>
 #include <syslog.h>
 #include <cstdlib>
+#include <sys/stat.h> 
 
 Daemon::Daemon() = default;
 
