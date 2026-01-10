@@ -148,12 +148,27 @@ void run_chat(ConnBase* conn, const std::string& type_name) {
 }
 
 int main(int argc, char* argv[]) {
-    if (argc < 2) {
-        std::cerr << "Usage: " << argv[0] << " <mmap|shm|fifo>" << std::endl;
-        return 1;
+    // Определяем тип соединения из имени исполняемого файла
+    std::string program_name = argv[0];
+    std::string type;
+    
+    // Извлекаем тип из имени файла (host_mmap -> mmap, host_shm -> shm, host_fifo -> fifo)
+    if (program_name.find("mmap") != std::string::npos) {
+        type = "mmap";
+    } else if (program_name.find("shm") != std::string::npos) {
+        type = "shm";
+    } else if (program_name.find("fifo") != std::string::npos) {
+        type = "fifo";
+    } else {
+        // Если тип не найден в имени, используем аргумент командной строки (для обратной совместимости)
+        if (argc < 2) {
+            std::cerr << "Usage: " << argv[0] << " [mmap|shm|fifo]" << std::endl;
+            std::cerr << "Or run as: host_mmap, host_shm, or host_fifo" << std::endl;
+            return 1;
+        }
+        type = argv[1];
     }
     
-    std::string type = argv[1];
     std::string id = "chat_" + std::to_string(getpid());
     
     // Настраиваем обработчики сигналов
