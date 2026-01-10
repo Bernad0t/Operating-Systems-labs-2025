@@ -21,7 +21,7 @@ static pid_t client_pid = 0;
 static time_t client_last_activity = 0;
 static const int CLIENT_TIMEOUT = 60; // 1 минута
 
-void signal_handler(int sig) {
+static void signal_handler(int sig) {
     if (sig == SIGUSR1) {
         std::cout << "Host: Received handshake signal from client" << std::endl;
     } else if (sig == SIGTERM || sig == SIGINT) {

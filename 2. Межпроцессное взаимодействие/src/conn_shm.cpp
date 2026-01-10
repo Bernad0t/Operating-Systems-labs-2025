@@ -8,7 +8,8 @@
 #include <iostream>
 #include <errno.h>
 
-ConnShm::ConnShm(const std::string& id, bool create) : is_host_(create), id_(id) {
+ConnShm::ConnShm(const std::string& id, bool create) : id_(id) {
+    is_host_ = create;
     mem_size_ = BUFFER_SIZE + sizeof(size_t); // buffer + size field
     
     shm_name_ = "/shm_" + id;

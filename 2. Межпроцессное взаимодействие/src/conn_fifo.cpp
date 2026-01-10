@@ -7,7 +7,8 @@
 #include <iostream>
 #include <errno.h>
 
-ConnFifo::ConnFifo(const std::string& id, bool create) : is_host_(create), id_(id) {
+ConnFifo::ConnFifo(const std::string& id, bool create) : id_(id) {
+    is_host_ = create;
     fifo_host_to_client_ = "/tmp/fifo_host_to_client_" + id;
     fifo_client_to_host_ = "/tmp/fifo_client_to_host_" + id;
     sem_read_name_ = "/fifo_read_sem_" + id;

@@ -27,23 +27,34 @@ set(FIFO_SOURCES
     conn_fifo.cpp
 )
 
+# Все типы соединений вместе (для хостов и клиентов, которые включают все заголовки)
+set(ALL_CONN_SOURCES
+    ${COMMON_SOURCES}
+    conn_mmap.cpp
+    conn_shm.cpp
+    conn_fifo.cpp
+)
+
 # Создание исполняемых файлов host_*
-add_executable(host_mmap host.cpp ${MMAP_SOURCES})
+# Все хосты должны компилировать все типы соединений, так как выбор происходит во время выполнения
+add_executable(host_mmap host.cpp ${ALL_CONN_SOURCES})
 target_link_libraries(host_mmap pthread rt)
 
-add_executable(host_shm host.cpp ${SHM_SOURCES})
+add_executable(host_shm host.cpp ${ALL_CONN_SOURCES})
 target_link_libraries(host_shm pthread rt)
 
-add_executable(host_fifo host.cpp ${FIFO_SOURCES})
+add_executable(host_fifo host.cpp ${ALL_CONN_SOURCES})
 target_link_libraries(host_fifo pthread rt)
 
 # Создание исполняемых файлов client_*
-add_executable(client_mmap client.cpp ${MMAP_SOURCES})
+# Все клиенты должны компилировать все типы соединений, так как выбор происходит во время выполнения
+
+add_executable(client_mmap client.cpp ${ALL_CONN_SOURCES})
 target_link_libraries(client_mmap pthread rt)
 
-add_executable(client_shm client.cpp ${SHM_SOURCES})
+add_executable(client_shm client.cpp ${ALL_CONN_SOURCES})
 target_link_libraries(client_shm pthread rt)
 
-add_executable(client_fifo client.cpp ${FIFO_SOURCES})
+add_executable(client_fifo client.cpp ${ALL_CONN_SOURCES})
 target_link_libraries(client_fifo pthread rt)
 

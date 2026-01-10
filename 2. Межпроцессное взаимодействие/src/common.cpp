@@ -9,7 +9,7 @@
 
 static volatile sig_atomic_t signal_received = 0;
 
-void signal_handler(int sig) {
+static void handshake_signal_handler(int sig) {
     if (sig == SIGUSR1) {
         signal_received = 1;
     }
@@ -26,7 +26,7 @@ bool SendHandshakeSignal(pid_t host_pid) {
 
 void SetupHandshakeHandler(void (*handler)(int)) {
     struct sigaction sa;
-    sa.sa_handler = handler ? handler : signal_handler;
+    sa.sa_handler = handler ? handler : handshake_signal_handler;
     sigemptyset(&sa.sa_mask);
     sa.sa_flags = 0;
     

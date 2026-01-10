@@ -17,7 +17,7 @@
 
 static volatile bool running = true;
 
-void signal_handler(int sig) {
+static void signal_handler(int sig) {
     if (sig == SIGTERM || sig == SIGINT) {
         running = false;
         std::cout << "Client: Received termination signal, shutting down..." << std::endl;
@@ -74,16 +74,10 @@ void run_chat(ConnBase* conn, const std::string& type_name, pid_t host_pid) {
         return;
     }
     
-    time_t last_activity = time(nullptr);
-    
     while (running) {
-        // Обновляем время последней активности при вводе или отправке сообщения
-        time_t now = time(nullptr);
-        
         // Проверяем наличие сообщений от хоста
         ChatMessage msg;
         if (conn->Read(&msg, sizeof(msg))) {
-            last_activity = now;
             print_message(msg, true);
             
             // Если это личное сообщение для клиента, отвечаем
@@ -109,8 +103,6 @@ void run_chat(ConnBase* conn, const std::string& type_name, pid_t host_pid) {
                 std::getline(std::cin, input);
                 
                 if (!input.empty()) {
-                    last_activity = now;
-                    
                     if (input == "/quit") {
                         running = false;
                         break;
