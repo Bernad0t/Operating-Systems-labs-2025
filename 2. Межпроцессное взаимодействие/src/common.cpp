@@ -15,6 +15,10 @@ static void handshake_signal_handler(int sig) {
     }
 }
 
+void SetHandshakeReceived() {
+    signal_received = 1;
+}
+
 bool SendHandshakeSignal(pid_t host_pid) {
     if (kill(host_pid, SIGUSR1) == -1) {
         std::cerr << "Error: Failed to send handshake signal: " << strerror(errno) << std::endl;

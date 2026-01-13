@@ -24,6 +24,7 @@ static const int CLIENT_TIMEOUT = 60; // 1 минута
 static void signal_handler(int sig) {
     if (sig == SIGUSR1) {
         std::cout << "Host: Received handshake signal from client" << std::endl;
+        SetHandshakeReceived(); // Устанавливаем флаг для WaitForSignalWithTimeout
     } else if (sig == SIGTERM || sig == SIGINT) {
         running = false;
         std::cout << "Host: Received termination signal, shutting down..." << std::endl;
@@ -57,9 +58,10 @@ void run_chat(ConnBase* conn, const std::string& type_name) {
         return;
     }
     
-    // Отправляем статус о подключении
+    // Отправляем статус о подключении клиенту
     ChatMessage status_msg(MessageType::STATUS, "Host", "", "Client connected");
     print_message(status_msg, true);
+    conn->Write(&status_msg, sizeof(status_msg)); // Отправляем клиенту
     
     client_last_activity = time(nullptr);
     
@@ -148,25 +150,55 @@ void run_chat(ConnBase* conn, const std::string& type_name) {
 }
 
 int main(int argc, char* argv[]) {
-    // Определяем тип соединения из имени исполняемого файла
-    std::string program_name = argv[0];
     std::string type;
     
-    // Извлекаем тип из имени файла (host_mmap -> mmap, host_shm -> shm, host_fifo -> fifo)
-    if (program_name.find("mmap") != std::string::npos) {
-        type = "mmap";
-    } else if (program_name.find("shm") != std::string::npos) {
-        type = "shm";
-    } else if (program_name.find("fifo") != std::string::npos) {
-        type = "fifo";
-    } else {
-        // Если тип не найден в имени, используем аргумент командной строки (для обратной совместимости)
-        if (argc < 2) {
-            std::cerr << "Usage: " << argv[0] << " [mmap|shm|fifo]" << std::endl;
-            std::cerr << "Or run as: host_mmap, host_shm, or host_fifo" << std::endl;
-            return 1;
+    // Сначала проверяем аргумент командной строки (приоритет)
+    if (argc >= 2) {
+        std::string arg_type = argv[1];
+        if (arg_type == "mmap" || arg_type == "shm" || arg_type == "fifo") {
+            type = arg_type;
         }
-        type = argv[1];
+    }
+    
+    // Если тип не задан аргументом, пытаемся определить из имени файла
+    if (type.empty()) {
+        std::string program_name = argv[0];
+        
+        // Извлекаем имя файла без пути
+        size_t last_slash = program_name.find_last_of("/\\");
+        if (last_slash != std::string::npos) {
+            program_name = program_name.substr(last_slash + 1);
+        }
+        
+        // Ищем точное совпадение после префикса "host_"
+        if (program_name.substr(0, 5) == "host_") {
+            std::string suffix = program_name.substr(5);
+            if (suffix == "mmap" || suffix == "shm" || suffix == "fifo") {
+                type = suffix;
+            }
+        }
+        
+        // Если не нашли точное совпадение, ищем подстроки (менее надежно, но для совместимости)
+        if (type.empty()) {
+            if (program_name.find("_mmap") != std::string::npos || 
+                program_name == "mmap" || program_name.find("mmap") == 0) {
+                type = "mmap";
+            } else if (program_name.find("_shm") != std::string::npos || 
+                       program_name == "shm" || program_name.find("shm") == 0) {
+                type = "shm";
+            } else if (program_name.find("_fifo") != std::string::npos || 
+                       program_name == "fifo" || program_name.find("fifo") == 0) {
+                type = "fifo";
+            }
+        }
+    }
+    
+    // Если тип все еще не определен, выводим ошибку
+    if (type.empty()) {
+        std::cerr << "Error: Cannot determine connection type." << std::endl;
+        std::cerr << "Usage: " << argv[0] << " [mmap|shm|fifo]" << std::endl;
+        std::cerr << "Or run as: host_mmap, host_shm, or host_fifo" << std::endl;
+        return 1;
     }
     
     std::string id = "chat_" + std::to_string(getpid());
@@ -201,7 +233,7 @@ int main(int argc, char* argv[]) {
     std::cout << "Host: Connection created, waiting for client handshake..." << std::endl;
     
     // Ждем сигнала handshake от клиента (с таймаутом)
-    if (!WaitForSignalWithTimeout(5)) {
+    if (!WaitForSignalWithTimeout(30)) {
         std::cerr << "Error: Handshake timeout" << std::endl;
         conn->Close();
         delete conn;

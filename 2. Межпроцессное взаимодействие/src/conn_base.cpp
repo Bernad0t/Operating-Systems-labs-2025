@@ -18,7 +18,11 @@ bool ConnBase::WaitWithTimeout(sem_t *sem, int timeout_seconds) {
     int result = sem_timedwait(sem, &ts);
     if (result == -1) {
         if (errno == ETIMEDOUT) {
-            std::cerr << "Error: Semaphore wait timeout (" << timeout_seconds << " seconds)" << std::endl;
+            // Таймаут - это нормальная ситуация, не выводим ошибку
+            return false;
+        }
+        if (errno == EINTR) {
+            // Прервано сигналом - это тоже нормально
             return false;
         }
         std::cerr << "Error: sem_timedwait failed: " << strerror(errno) << std::endl;

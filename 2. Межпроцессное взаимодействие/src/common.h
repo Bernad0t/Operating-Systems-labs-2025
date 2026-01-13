@@ -23,3 +23,6 @@ void SetupHandshakeHandler(void (*handler)(int));
 // Функция для ожидания сигнала с таймаутом
 bool WaitForSignalWithTimeout(int timeout_seconds = 5);
 
+// Функция для установки флага получения сигнала (для использования в пользовательских обработчиках)
+void SetHandshakeReceived();
+

@@ -217,8 +217,7 @@ bool ConnFifo::Write(const void *buf, size_t count) {
         return false;
     }
     
-    Post(write_sem_); // Освобождаем write sem
-    Post(read_sem_);  // Сигнализируем что данные готовы
+    Post(read_sem_);  // Сигнализируем что данные готовы (write_sem_ будет освобожден после чтения)
     return true;
 }
 

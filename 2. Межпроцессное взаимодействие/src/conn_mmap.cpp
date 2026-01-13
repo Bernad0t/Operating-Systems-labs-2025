@@ -169,8 +169,7 @@ bool ConnMmap::Write(const void *buf, size_t count) {
     *size_ptr = count;
     memcpy(static_cast<char*>(shared_mem_) + sizeof(size_t), buf, count);
     
-    Post(write_sem_); // Освобождаем write sem перед сигналом read
-    Post(read_sem_);  // Сигнализируем что данные готовы
+    Post(read_sem_);  // Сигнализируем что данные готовы (write_sem_ будет освобожден после чтения)
     return true;
 }
 
